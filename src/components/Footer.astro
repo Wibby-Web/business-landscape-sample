@@ -1,0 +1,90 @@
+---
+import { useTranslations } from '../i18n/utils';
+import { languages, type Lang } from '../i18n/ui';
+import { localeLink, sectionLink } from '../lib/url';
+import { LeafMark, MailIcon, PhoneIcon } from './icons';
+
+interface Props {
+  currentLang: Lang;
+}
+
+const { currentLang } = Astro.props;
+const t = useTranslations(currentLang);
+const email = t('contact.email');
+const phone = t('contact.phone');
+const telHref = `tel:${phone.replace(/[^\d+]/g, '')}`;
+
+const navItems = [
+  { id: 'services', label: t('nav.services') },
+  { id: 'work', label: t('nav.work') },
+  { id: 'about', label: t('nav.about') },
+  { id: 'contact', label: t('nav.contact') },
+];
+---
+
+<footer class="bg-forest text-cream">
+	<div class="shell py-16 md:py-24">
+		<div class="grid gap-10 md:grid-cols-[1.6fr_0.9fr_1.15fr] md:gap-12">
+			<div>
+				<div class="flex items-center gap-2.5">
+					<LeafMark className="h-5 w-5 text-cream/80" />
+					<h2 class="text-[1.125rem] font-medium tracking-[-0.01em] text-cream">
+						{t('footer.brand')}
+					</h2>
+				</div>
+				<p class="mt-4 max-w-[34ch] text-[0.8125rem] leading-relaxed text-cream/65">
+					{t('footer.address')}
+				</p>
+				<div class="mt-6 flex items-center gap-3 text-[0.75rem]">
+					{Object.entries(languages).map(([code, label], index) => (
+						<span class="flex items-center gap-3">
+							{index > 0 && <span class="text-cream/55" aria-hidden="true">|</span>}
+							<a
+								href={localeLink(code, '/')}
+								hreflang={code}
+								lang={code}
+								class={code === currentLang ? 'text-cream' : 'text-cream/65 transition-colors hover:text-cream'}
+							>
+								{label}
+							</a>
+						</span>
+					))}
+				</div>
+			</div>
+
+			<nav aria-label="Footer">
+				<h3 class="text-[0.6875rem] font-medium uppercase tracking-[0.2em] text-cream/60">
+					{t('footer.navHeading')}
+				</h3>
+				<ul class="mt-5 space-y-3">
+					{navItems.map((item) => (
+						<li>
+							<a href={sectionLink(currentLang, item.id)} class="text-[0.8125rem] text-cream/75 transition-colors hover:text-cream">
+								{item.label}
+							</a>
+						</li>
+					))}
+				</ul>
+			</nav>
+
+			<div>
+				<h3 class="text-[0.6875rem] font-medium uppercase tracking-[0.2em] text-cream/60">
+					{t('footer.inquiriesHeading')}
+				</h3>
+				<div class="mt-5 space-y-3">
+					<a href={`mailto:${email}`} class="flex items-center gap-2.5 text-[0.8125rem] text-cream/75 transition-colors hover:text-cream">
+						<MailIcon className="h-4 w-4 text-cream/50" />
+						{email}
+					</a>
+					<a href={telHref} class="flex items-center gap-2.5 text-[0.8125rem] text-cream/75 transition-colors hover:text-cream">
+						<PhoneIcon className="h-4 w-4 text-cream/50" />
+						{phone}
+					</a>
+				</div>
+				<p class="mt-8 max-w-[30ch] text-[0.6875rem] leading-relaxed text-cream/60">
+					&copy; {new Date().getFullYear()} {t('footer.brand')}. {t('footer.rights')}
+				</p>
+			</div>
+		</div>
+	</div>
+</footer>

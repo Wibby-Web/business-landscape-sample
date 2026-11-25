@@ -1,0 +1,159 @@
+---
+import { LeafMark } from './icons';
+import { useTranslations } from '../i18n/utils';
+import { localeLink, sectionLink } from '../lib/url';
+import type { Lang, TextKey } from '../i18n/ui';
+
+interface Props {
+	currentLang: Lang;
+}
+
+const { currentLang } = Astro.props;
+const t = useTranslations(currentLang);
+
+const links: { id: string; key: TextKey }[] = [
+	{ id: 'services', key: 'nav.services' },
+	{ id: 'work', key: 'nav.work' },
+	{ id: 'about', key: 'nav.about' },
+];
+
+const mobileLinks: { id: string; key: TextKey }[] = [
+	...links,
+	{ id: 'contact', key: 'nav.contact' },
+];
+---
+
+<header class="sticky top-0 z-50 border-b border-ink/[0.07] bg-cream/92 backdrop-blur-md">
+	<div class="shell flex h-16 items-center justify-between gap-6 md:h-20">
+		<a href={localeLink(currentLang, '/')} class="group flex items-center gap-2.5">
+			<LeafMark className="h-6 w-6 text-forest transition-transform duration-300 group-hover:-rotate-6" />
+			<span class="font-serif text-[1.1875rem] leading-none tracking-[-0.01em] text-ink">
+				Cedar &amp; Stone
+			</span>
+		</a>
+
+		<nav aria-label="Primary" class="hidden items-center gap-9 md:flex">
+			{links.map((link) => (
+				<a
+					href={sectionLink(currentLang, link.id)}
+					class="-my-3 py-3 text-[0.8125rem] text-ink/65 transition-colors hover:text-ink"
+				>
+					{t(link.key)}
+				</a>
+			))}
+		</nav>
+
+		<div class="flex items-center gap-3">
+			<a href={sectionLink(currentLang, 'contact')} class="btn btn-primary hidden md:inline-flex">
+				{t('nav.cta')}
+			</a>
+
+			{/* Native disclosure: the menu works without a framework or hydration. */}
+			<details class="mobile-menu md:hidden" data-mobile-menu>
+				<summary class="menu-summary" aria-label={t('nav.openMenu')}>
+					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true" class="icon-open">
+						<path d="M4 8h16M4 16h16" />
+					</svg>
+					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true" class="icon-close">
+						<path d="M6 6l12 12M18 6 6 18" />
+					</svg>
+				</summary>
+
+				<div class="menu-panel">
+					<nav aria-label="Mobile" class="shell flex flex-col gap-1 py-4">
+						{mobileLinks.map((link) => (
+							<a
+								href={sectionLink(currentLang, link.id)}
+								class="py-3 text-[0.9375rem] text-ink/75 transition-colors hover:text-ink"
+							>
+								{t(link.key)}
+							</a>
+						))}
+						<a href={sectionLink(currentLang, 'contact')} class="btn btn-primary mt-3 self-start">
+							{t('nav.cta')}
+						</a>
+					</nav>
+				</div>
+			</details>
+		</div>
+	</div>
+</header>
+
+<style>
+	.mobile-menu > summary {
+		list-style: none;
+	}
+
+	.mobile-menu > summary::-webkit-details-marker {
+		display: none;
+	}
+
+	.menu-summary {
+		display: flex;
+		height: 2.75rem;
+		width: 2.75rem;
+		align-items: center;
+		justify-content: center;
+		margin-inline-end: -0.625rem;
+		border-radius: 3px;
+		color: color-mix(in oklab, var(--color-ink) 70%, transparent);
+		cursor: pointer;
+		transition: background-color 0.2s ease;
+	}
+
+	.menu-summary:hover {
+		background: color-mix(in oklab, var(--color-ink) 5%, transparent);
+	}
+
+	.menu-summary :global(svg) {
+		height: 1.25rem;
+		width: 1.25rem;
+	}
+
+	.mobile-menu .icon-close {
+		display: none;
+	}
+
+	.mobile-menu[open] .icon-close {
+		display: block;
+	}
+
+	.mobile-menu[open] .icon-open {
+		display: none;
+	}
+
+	.menu-panel {
+		position: fixed;
+		inset-inline: 0;
+		inset-block-start: 4rem;
+		z-index: 40;
+		border-block: 1px solid color-mix(in oklab, var(--color-ink) 8%, transparent);
+		background: var(--color-cream);
+		box-shadow: 0 18px 30px -24px rgb(0 0 0 / 0.45);
+	}
+</style>
+
+<script>
+	const menu = document.querySelector<HTMLDetailsElement>('[data-mobile-menu]');
+
+	if (menu) {
+		const close = () => {
+			menu.removeAttribute('open');
+		};
+
+		menu.querySelectorAll('a').forEach((link) => link.addEventListener('click', close));
+
+		document.addEventListener('keydown', (event) => {
+			if (event.key === 'Escape' && menu.open) {
+				close();
+				menu.querySelector('summary')?.focus();
+			}
+		});
+
+		document.addEventListener('click', (event) => {
+			if (menu.open && !menu.contains(event.target as Node)) {
+				close();
+			}
+		});
+	}
+</script>

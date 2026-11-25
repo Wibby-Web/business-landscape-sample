@@ -1,0 +1,271 @@
+---
+import { Picture, getImage } from 'astro:assets';
+import Layout from '../../layouts/Layout.astro';
+import { EstimateForm } from '../../components/EstimateForm';
+import { CheckIcon, MailIcon, PhoneIcon } from '../../components/icons';
+import { ui } from '../../i18n/ui';
+
+import heroPhoto from '../../assets/photos/hero-backyard.png';
+import gardenBedsPhoto from '../../assets/photos/garden-beds.png';
+import lawnPhoto from '../../assets/photos/lawn.png';
+import patioPhoto from '../../assets/photos/patio.png';
+import teamPhoto from '../../assets/photos/team.png';
+
+export function getStaticPaths() {
+	return [
+		{ params: { lang: undefined } },
+		{ params: { lang: 'fr' } }
+	];
+}
+
+const { lang } = Astro.params;
+const currentLang = (lang || 'en') as keyof typeof ui;
+const copy = ui[currentLang];
+
+const email = copy['contact.email'];
+const phone = copy['contact.phone'];
+const telHref = `tel:${phone.replace(/[^\d+]/g, '')}`;
+
+const servicePhotos = [gardenBedsPhoto, patioPhoto, lawnPhoto];
+const projectPhotos = [patioPhoto, gardenBedsPhoto, lawnPhoto];
+
+const title =
+	currentLang === 'fr'
+		? 'Cedar & Stone — Aménagement paysager · West Island, Montréal'
+		: 'Cedar & Stone — Landscaping · West Island, Montreal';
+
+const [leadProject, ...otherProjects] = copy.projects;
+const leadProjectPhoto = projectPhotos[0];
+
+// LCP image: same widths/sizes/quality as <Picture>, generated up-front so the
+// preload scanner can start the fetch before the body is parsed. Only the AVIF
+// candidate is preloaded: it is the source modern browsers pick, and preloading
+// both formats would download the hero twice.
+const heroWidths = [420, 560, 760, 960, 1120, 1376];
+const heroSizes =
+	'(min-width: 1240px) 1120px, (min-width: 768px) calc(100vw - 5rem), calc(100vw - 3rem)';
+const quality = 70;
+const heroAvif = await getImage({ src: heroPhoto, widths: heroWidths, sizes: heroSizes, format: 'avif', quality });
+
+const imageProps = {
+	formats: ['avif', 'webp'],
+	fallbackFormat: 'jpg',
+	// Gallery images are secondary to the hero: trim bytes aggressively.
+	quality: 60
+} as const;
+---
+
+<Layout title={title} description={copy['hero.subtitle']} lang={currentLang}>
+	<Fragment slot="head">
+		<link
+			rel="preload"
+			as="image"
+			type="image/avif"
+			href={heroAvif.src}
+			imagesrcset={heroAvif.srcSet.attribute}
+			imagesizes={heroSizes}
+			fetchpriority="high"
+		/>
+	</Fragment>
+
+	{/* Hero */}
+	<section class="shell pt-12 md:pt-24">
+		<p class="eyebrow">{copy['hero.eyebrow']}</p>
+		<h1 class="mt-5 text-[clamp(2.5rem,1.35rem_+_2.9vw,3.9rem)] leading-[1.03] font-medium tracking-[-0.035em] text-ink">
+			{copy['hero.title']}
+		</h1>
+		<p class="mt-6 max-w-[46ch] text-[0.9375rem] leading-[1.65] text-ink/70 md:text-[1.0625rem]">
+			{copy['hero.subtitle']}
+		</p>
+		<div class="mt-9 flex flex-wrap items-center gap-x-3 gap-y-5">
+			<a href="#contact" class="btn btn-primary">{copy['hero.ctaPrimary']}</a>
+			<a href="#work" class="btn btn-ghost">{copy['hero.ctaSecondary']}</a>
+			<p class="ml-1 flex items-center gap-2 text-[0.75rem] text-ink/65 sm:ml-3">
+				<span class="inline-block size-1.5 rounded-full bg-forest/70" aria-hidden="true"></span>
+				<span>{copy['hero.owned']}</span>
+				<span class="text-ink/70" aria-hidden="true">·</span>
+				<span>{copy['hero.location']}</span>
+			</p>
+		</div>
+	</section>
+
+	<div class="shell pt-10 pb-14 md:pt-20 md:pb-28">
+		<Picture
+			{...imageProps}
+			quality={quality}
+			src={heroPhoto}
+			alt={copy['hero.imageAlt']}
+			widths={heroWidths}
+			sizes={heroSizes}
+			class="h-[300px] w-full rounded-[2px] object-cover sm:h-[400px] lg:h-[560px]"
+			loading="eager"
+			fetchpriority="high"
+			decoding="async"
+		/>
+	</div>
+
+	{/* Services */}
+	<section id="services" class="scroll-mt-24 bg-sand">
+		<div class="shell py-16 md:py-32">
+			<p class="eyebrow">{copy['services.eyebrow']}</p>
+			<h2 class="section-title mt-4">{copy['services.title']}</h2>
+			<div class="mt-10 grid gap-10 sm:grid-cols-2 md:mt-14 lg:grid-cols-3 lg:gap-8">
+				{copy.services.map((service, index) => (
+					<article>
+						<Picture
+							{...imageProps}
+							src={servicePhotos[index]}
+							alt={service.imageAlt}
+							widths={[320, 480, 720]}
+							sizes="(min-width: 1240px) 352px, (min-width: 1024px) calc((100vw - 9rem) / 3), (min-width: 640px) calc(50vw - 2.75rem), calc(100vw - 3rem)"
+							class="aspect-[4/3] w-full rounded-[2px] object-cover"
+							loading="lazy"
+							fetchpriority="low"
+							decoding="async"
+						/>
+						<h3 class="mt-5 text-[1.0625rem] font-medium tracking-[-0.01em]">{service.title}</h3>
+						<p class="mt-2 max-w-[34ch] text-[0.875rem] leading-relaxed text-ink/70">
+							{service.description}
+						</p>
+					</article>
+				))}
+			</div>
+		</div>
+	</section>
+
+	{/* Selected work */}
+	<section id="work" class="scroll-mt-24 bg-cream">
+		<div class="shell py-16 md:py-32">
+			<div class="flex flex-col gap-3 md:flex-row md:items-baseline md:justify-between md:gap-10">
+				<h2 class="section-title">{copy['work.title']}</h2>
+				<p class="text-[0.75rem] leading-relaxed text-ink/65 md:text-right">
+					{copy['work.note']}
+				</p>
+			</div>
+
+			<div class="mt-10 grid gap-8 md:mt-14 lg:grid-cols-[1.45fr_1fr] lg:gap-8">
+				<figure>
+					<div class="relative">
+						<Picture
+							{...imageProps}
+							src={leadProjectPhoto}
+							alt={leadProject.imageAlt}
+							widths={[480, 720, 1120]}
+							sizes="(min-width: 1240px) 644px, (min-width: 1024px) 58vw, calc(100vw - 3rem)"
+							class="aspect-[3/2] w-full rounded-[2px] object-cover"
+							loading="lazy"
+							fetchpriority="low"
+							decoding="async"
+						/>
+						<span class="absolute top-3 left-3 rounded-[2px] bg-cream/90 px-2 py-1 text-[0.625rem] tracking-[0.04em] text-ink/70 backdrop-blur-sm">
+							{copy['work.badge']}
+						</span>
+					</div>
+					<figcaption class="mt-4 flex items-baseline justify-between gap-6">
+						<span class="text-[0.875rem] font-medium">{leadProject.title}</span>
+						<span class="text-right text-[0.75rem] text-ink/65">{leadProject.meta}</span>
+					</figcaption>
+				</figure>
+
+				<div class="flex flex-col gap-7">
+					{otherProjects.map((project, index) => (
+						<figure>
+							<div class="relative">
+								<Picture
+									{...imageProps}
+									src={projectPhotos[index + 1]}
+									alt={project.imageAlt}
+									widths={[360, 540, 720]}
+									sizes="(min-width: 1240px) 444px, (min-width: 1024px) 36vw, calc(100vw - 3rem)"
+									class="aspect-[8/5] w-full rounded-[2px] object-cover"
+									loading="lazy"
+									fetchpriority="low"
+									decoding="async"
+								/>
+								<span class="absolute top-3 left-3 rounded-[2px] bg-cream/90 px-2 py-1 text-[0.625rem] tracking-[0.04em] text-ink/70 backdrop-blur-sm">
+									{copy['work.badge']}
+								</span>
+							</div>
+							<figcaption class="mt-3 flex items-baseline justify-between gap-6">
+								<span class="text-[0.875rem] font-medium">{project.title}</span>
+								<span class="text-right text-[0.75rem] text-ink/65">{project.meta}</span>
+							</figcaption>
+						</figure>
+					))}
+				</div>
+			</div>
+		</div>
+	</section>
+
+	{/* About */}
+	<section id="about" class="scroll-mt-24 bg-mist">
+		<div class="shell grid gap-10 py-16 md:grid-cols-[0.8fr_1fr] md:items-center md:gap-14 md:py-36 lg:gap-20">
+			<Picture
+				{...imageProps}
+				src={teamPhoto}
+				alt={copy['about.imageAlt']}
+				widths={[360, 540, 720]}
+				sizes="(min-width: 1240px) 462px, (min-width: 768px) 38vw, calc(100vw - 3rem)"
+				class="aspect-[14/15] w-full rounded-[2px] object-cover"
+				loading="lazy"
+				fetchpriority="low"
+				decoding="async"
+			/>
+			<div>
+				<p class="eyebrow">{copy['about.eyebrow']}</p>
+				<h2 class="section-title mt-4">{copy['about.title']}</h2>
+				<p class="mt-5 max-w-[54ch] text-[0.875rem] leading-[1.75] text-ink/70 md:text-[0.9375rem]">
+					{copy['about.body']}
+				</p>
+				<ul class="mt-8 space-y-4">
+					{copy.aboutPoints.map((point) => (
+						<li class="flex items-start gap-3">
+							<CheckIcon className="mt-0.5 h-[18px] w-[18px] shrink-0 text-forest/60" />
+							<span class="max-w-[52ch] text-[0.8125rem] leading-relaxed text-ink/70">{point}</span>
+						</li>
+					))}
+				</ul>
+			</div>
+		</div>
+	</section>
+
+	{/* Contact */}
+	<section id="contact" class="scroll-mt-24 bg-forest text-cream">
+		<div class="shell grid gap-10 py-16 md:py-32 lg:grid-cols-[1fr_1.1fr] lg:items-start lg:gap-16">
+			<div class="lg:pt-2">
+				<p class="text-[0.6875rem] font-medium uppercase tracking-[0.2em] text-cream/65">
+					{copy['contact.eyebrow']}
+				</p>
+				<h2 class="mt-4 text-[clamp(2rem,1.5rem_+_1.6vw,2.6rem)] leading-[1.08] font-medium tracking-[-0.03em] text-cream">
+					{copy['contact.title']}
+				</h2>
+				<p class="mt-5 max-w-[34ch] text-[0.875rem] leading-relaxed text-cream/70">
+					{copy['contact.body']}
+				</p>
+
+				<div class="mt-8 space-y-3">
+					<a
+						href={`mailto:${email}`}
+						class="flex items-center gap-3 py-1 text-[0.875rem] text-cream/85 transition-colors hover:text-cream"
+					>
+						<MailIcon className="h-[17px] w-[17px] text-cream/50" />
+						{email}
+					</a>
+					<a
+						href={telHref}
+						class="flex items-center gap-3 py-1 text-[0.875rem] text-cream/85 transition-colors hover:text-cream"
+					>
+						<PhoneIcon className="h-[17px] w-[17px] text-cream/50" />
+						{phone}
+					</a>
+				</div>
+
+				<p class="mt-9 max-w-[36ch] text-[0.75rem] leading-relaxed text-cream/60">
+					{copy['contact.note']}
+				</p>
+			</div>
+
+			<EstimateForm client:visible currentLang={currentLang} />
+		</div>
+	</section>
+</Layout>

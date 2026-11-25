@@ -1,0 +1,60 @@
+---
+import '@fontsource-variable/inter-tight/wght.css';
+import '@fontsource/source-serif-4/latin-400.css';
+import '../styles/global.css';
+
+import interTightLatin from '@fontsource-variable/inter-tight/files/inter-tight-latin-wght-normal.woff2?url';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import { assetUrl, localeLink } from '../lib/url';
+import { useTranslations } from '../i18n/utils';
+import type { Lang } from '../i18n/ui';
+
+interface Props {
+	title: string;
+	description: string;
+	lang: Lang;
+}
+
+const { title, description, lang } = Astro.props;
+const t = useTranslations(lang);
+const origin = Astro.site ?? Astro.url.origin;
+const canonical = new URL(Astro.url.pathname, origin).href;
+const alternate = (code: Lang) => new URL(localeLink(code, '/'), origin).href;
+---
+
+<!doctype html>
+<html lang={lang}>
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<meta name="description" content={description} />
+		<meta name="color-scheme" content="light" />
+		<meta name="theme-color" content="#faf9f5" />
+		<link rel="canonical" href={canonical} />
+		<link rel="alternate" hreflang="en" href={alternate('en')} />
+		<link rel="alternate" hreflang="fr" href={alternate('fr')} />
+		<link rel="alternate" hreflang="x-default" href={alternate('en')} />
+		<meta property="og:type" content="website" />
+		<meta property="og:title" content={title} />
+		<meta property="og:description" content={description} />
+		<meta property="og:url" content={canonical} />
+		<meta property="og:locale" content={lang === 'fr' ? 'fr_CA' : 'en_CA'} />
+		<link rel="icon" type="image/svg+xml" href={assetUrl('favicon.svg')} />
+		<meta name="generator" content={Astro.generator} />
+		<title>{title}</title>
+
+		{/* One preload for the face used by all body text; the serif wordmark is
+		    small enough to load with its stylesheet. */}
+		<link rel="preload" href={interTightLatin} as="font" type="font/woff2" crossorigin />
+		<slot name="head" />
+	</head>
+	<body class="flex min-h-screen flex-col bg-cream font-sans text-ink antialiased">
+		<a href="#main" class="skip-link">{t('a11y.skip')}</a>
+		<Header currentLang={lang} />
+		<main id="main" tabindex="-1" class="flex-1">
+			<slot />
+		</main>
+		<Footer currentLang={lang} />
+	</body>
+</html>
